@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-medical-50: #f8fafc;
+  --color-medical-100: #f1f5f9;
+  --color-medical-200: #e2e8f0;
+  --color-medical-300: #cbd5e1;
+  --color-medical-400: #94a3b8;
+  --color-medical-500: #1e3a8a; /* Deep blue from theme */
+  --color-medical-600: #1e40af;
+  --color-medical-700: #1d4ed8;
+  --color-medical-800: #1e3a8a;
+  --color-medical-900: #0f172a;
+}
+
+@layer base {
+  body {
+    @apply font-sans text-slate-800 bg-slate-50;
+  }
+}
+
+.sidebar-gradient {
+  background: #1e3a8a;
+}
+
+.medical-gradient {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+}
+
+.glass-card {
+  @apply bg-white border border-slate-200 shadow-sm rounded-2xl;
+}
+
