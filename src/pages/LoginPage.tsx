@@ -19,24 +19,13 @@ export default function LoginPage() {
     const supabaseClient = getSupabase();
 
     try {
-      // QUICK PATH for demo/dev
-      const lowerEmail = email.toLowerCase();
-      const isDemoEmail = lowerEmail.includes('admin') || 
-                         lowerEmail.includes('doctor') || 
-                         lowerEmail.includes('dokter') || 
-                         lowerEmail.includes('apoteker') ||
-                         lowerEmail.includes('pharma');
-
-      if (!supabaseClient || isDemoEmail) {
-        localStorage.setItem('demo_email', email);
-        console.log('Using demo login path for:', email);
-        window.location.href = '/app';
-        return;
+      if (!supabaseClient) {
+        throw new Error('Supabase client not initialized');
       }
 
       // Timeout for real supabase calls to prevent endless loading
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Koneksi lambat. Silakan gunakan akses Demo (Admin/Dokter/Apoteker)')), 6000)
+        setTimeout(() => reject(new Error('Koneksi lambat. Silakan periksa koneksi internet Anda.')), 6000)
       );
 
       const loginResult = await Promise.race([
@@ -83,50 +72,6 @@ export default function LoginPage() {
           </motion.div>
         )}
 
-        <div className="mb-8 pt-6 border-b border-slate-100 pb-6">
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">Pilih Role Akses (Demo Mode)</p>
-           <div className="grid grid-cols-3 gap-3">
-              <button 
-                type="button"
-                onClick={() => { 
-                  localStorage.setItem('demo_email', 'admin@clinic.com');
-                  window.location.href = '/app';
-                }}
-                className="group flex flex-col items-center gap-2"
-              >
-                <div className="w-full py-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-100 group-hover:scale-105 transition-all">
-                  <Shield size={20} />
-                </div>
-                <span className="text-[9px] font-black text-slate-500 tracking-tighter uppercase">Admin</span>
-              </button>
-              <button 
-                type="button"
-                onClick={() => { 
-                  localStorage.setItem('demo_email', 'doctor@clinic.com');
-                  window.location.href = '/app';
-                }}
-                className="group flex flex-col items-center gap-2"
-              >
-                <div className="w-full py-4 bg-blue-600 border border-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100 group-hover:scale-105 transition-all">
-                  <Stethoscope size={20} />
-                </div>
-                <span className="text-[9px] font-black text-blue-600 tracking-tighter uppercase">Dokter</span>
-              </button>
-              <button 
-                type="button"
-                onClick={() => { 
-                  localStorage.setItem('demo_email', 'apoteker@clinic.com');
-                  window.location.href = '/app';
-                }}
-                className="group flex flex-col items-center gap-2"
-              >
-                <div className="w-full py-4 bg-amber-600 border border-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-100 group-hover:scale-105 transition-all">
-                   <Pill size={20} />
-                </div>
-                <span className="text-[9px] font-black text-amber-600 tracking-tighter uppercase">Apoteker</span>
-              </button>
-           </div>
-        </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
