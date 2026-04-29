@@ -16,8 +16,14 @@ export default function Header() {
   ];
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/login');
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if it fails, try to navigate
+      navigate('/login');
+    }
   };
 
   return (
@@ -82,21 +88,21 @@ export default function Header() {
         
         <div className="h-8 w-px bg-slate-200"></div>
 
-        <div className="flex items-center gap-5 pl-2 group cursor-pointer">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-5 pl-2 group cursor-pointer border-none bg-transparent outline-none"
+        >
           <div className="text-right hidden sm:block">
             <p className="text-xs font-black text-slate-900 leading-none group-hover:text-blue-600 transition-colors uppercase tracking-tight">{profile?.full_name}</p>
             <p className="text-[9px] text-slate-400 uppercase tracking-[0.2em] mt-1.5 font-black opacity-60 italic">{profile?.role}</p>
           </div>
           <div className="p-1 px-3 bg-slate-100 rounded-xl relative overflow-hidden group-hover:bg-blue-600 transition-all duration-500">
-            <button
-              onClick={handleLogout}
-              className="relative z-10 flex items-center gap-2 py-2 text-[10px] text-slate-600 group-hover:text-white transition-all font-black uppercase tracking-widest"
-            >
+            <div className="relative z-10 flex items-center gap-2 py-2 text-[10px] text-slate-600 group-hover:text-white transition-all font-black uppercase tracking-widest">
               <span>Logout</span>
               <LogOut size={14} className="group-hover:translate-x-1 transition-transform" />
-            </button>
+            </div>
           </div>
-        </div>
+        </button>
       </div>
     </header>
   );

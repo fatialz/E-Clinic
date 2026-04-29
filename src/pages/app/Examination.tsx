@@ -14,7 +14,6 @@ import {
   Save,
   ArrowLeft,
   FlaskConical,
-  History,
   Droplets,
   Heart,
   Wind
@@ -272,10 +271,6 @@ export default function Examination() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                 <button className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:shadow-lg transition-all active:scale-95">
-                    <History size={16} />
-                    Riwayat
-                 </button>
               </div>
             </div>
 

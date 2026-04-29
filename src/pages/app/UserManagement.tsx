@@ -38,8 +38,8 @@ export default function UserManagement() {
     } else {
       const initialUsers = [
         { id: '1', name: 'Admin Utama', email: 'admin@clinic.com', role: 'ADMIN', status: 'Aktif', avatar: 'AU', lastLogin: '2 jam yang lalu' },
-        { id: '2', name: 'dr. Sarah Johnson', email: 'sarah@clinic.com', role: 'DOCTOR', status: 'Aktif', avatar: 'SA', lastLogin: '5 menit yang lalu' },
-        { id: '3', name: 'Budi Apoteker', email: 'budi@clinic.com', role: 'PHARMACIST', status: 'Aktif', avatar: 'BA', lastLogin: 'Kemarin' },
+        { id: '2', name: 'dr. Sarah Johnson', email: 'dokter@clinic.com', role: 'DOCTOR', status: 'Aktif', avatar: 'SA', lastLogin: '5 menit yang lalu' },
+        { id: '3', name: 'Budi Apoteker', email: 'pharma@clinic.com', role: 'PHARMACIST', status: 'Aktif', avatar: 'BA', lastLogin: 'Kemarin' },
         { id: '4', name: 'dr. Ahmad Fauzi', email: 'ahmad@clinic.com', role: 'DOCTOR', status: 'Non-Aktif', avatar: 'AF', lastLogin: '3 hari yang lalu' },
       ];
       setUsers(initialUsers);
@@ -391,9 +391,8 @@ export default function UserManagement() {
                             type="email" 
                             value={formData.email} 
                             onChange={e => setFormData({...formData, email: e.target.value})}
-                            disabled={!!editingUser} 
                             placeholder="email@access.net"
-                            className="w-full bg-slate-50 border-2 border-transparent focus:border-blue-100 rounded-[1.5rem] px-6 py-4 text-sm font-black outline-none transition-all disabled:opacity-50 placeholder:text-slate-300" 
+                            className="w-full bg-slate-50 border-2 border-transparent focus:border-blue-100 rounded-[1.5rem] px-6 py-4 text-sm font-black outline-none transition-all placeholder:text-slate-300" 
                            />
                         </div>
                         <div className="space-y-2">

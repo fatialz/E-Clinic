@@ -19,16 +19,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const supabase = getSupabase();
+    const demoEmail = localStorage.getItem('demo_email');
     
-    if (!supabase) {
-      setLoading(false);
+    // Check for demo email FIRST to avoid waiting for potentially slow Supabase connection
+    if (demoEmail || !supabase) {
+      const email = demoEmail || 'admin@clinic.com';
+      setUser({ email, id: 'mock-id' } as any);
+      fetchProfile('mock-id', email);
+      
+      // If supabase exists, still listen for changes but don't block
+      if (supabase) {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (session?.user) {
+            localStorage.removeItem('demo_email');
+            setUser(session.user);
+            fetchProfile(session.user.id, session.user.email);
+          }
+        });
+        return () => subscription.unsubscribe();
+      }
       return;
     }
 
-    // Standard path
+    // Standard path if no demo_email
     const timeout = setTimeout(() => {
       if (loading) {
-        console.warn('Auth session check timed out');
+        console.warn('Auth session check timed out, falling back to guest');
         setLoading(false);
       }
     }, 5000);
@@ -51,9 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session.user);
         fetchProfile(session.user.id, session.user.email);
       } else {
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
+        const localEmail = localStorage.getItem('demo_email');
+        if (localEmail) {
+          setUser({ email: localEmail, id: 'mock-id' } as any);
+          fetchProfile('mock-id', localEmail);
+        } else {
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+        }
       }
     });
 
@@ -63,10 +85,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function fetchProfile(userId: string, userEmail?: string) {
+  async function fetchProfile(userId: string, overrideEmail?: string) {
     const supabase = getSupabase();
+    const demoEmail = localStorage.getItem('demo_email');
+    const effectiveEmail = (overrideEmail || demoEmail || user?.email || 'admin@clinic.com').toLowerCase();
     
-    if (!supabase) {
+    // DEMO/MOCK LOGIC: If no supabase OR we are in a demo scenario OR manually set email
+    if (!supabase || import.meta.env.DEV || demoEmail) {
+      let role: UserRole = 'ADMIN';
+      let name = 'Super Admin';
+
+      if (effectiveEmail.includes('doctor') || effectiveEmail.includes('dokter')) {
+        role = 'DOCTOR';
+        name = 'dr. Sarah Johnson';
+      } else if (effectiveEmail.includes('pharma') || effectiveEmail.includes('apoteker') || effectiveEmail.includes('obat')) {
+        role = 'PHARMACIST';
+        name = 'Budi Apoteker';
+      } else {
+        role = 'ADMIN';
+        name = 'Administrator';
+      }
+
+      setProfile({
+        id: userId || 'mock-id',
+        email: effectiveEmail,
+        full_name: name,
+        role: role,
+        created_at: new Date().toISOString()
+      });
       setLoading(false);
       return;
     }
@@ -79,13 +125,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        console.warn('Profile not found, using generic user info');
-        const email = userEmail || '';
-        const role: UserRole = email.includes('doctor') ? 'DOCTOR' : 
-                            (email.includes('pharma') ? 'PHARMACIST' : 'ADMIN');
+        // Fallback to mock if profile doesn't exist in DB but user is logged in
+        console.warn('Profile not found, using mock data');
+        const role: UserRole = effectiveEmail.includes('doctor') ? 'DOCTOR' : 
+                            (effectiveEmail.includes('pharma') ? 'PHARMACIST' : 'ADMIN');
         setProfile({
           id: userId,
-          email: email,
+          email: effectiveEmail,
           full_name: 'User',
           role: role,
           created_at: new Date().toISOString()
@@ -101,12 +147,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    localStorage.removeItem('demo_email');
     const supabase = getSupabase();
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
+    
+    // Always clear local state immediately for responsiveness
     setUser(null);
     setProfile(null);
+    
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Error during Supabase signOut:', err);
+      }
+    }
   };
 
   return (
