@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -18,53 +18,65 @@ import {
   Package,
   History,
   Settings,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { appointmentService, Appointment } from '../../services/appointmentService';
+import { recordService, MedicalRecord } from '../../services/recordService';
+import { patientService, Patient } from '../../services/patientService';
+import { pharmacyService, Medicine } from '../../services/pharmacyService';
 
 export default function Dashboard() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const role = profile?.role || 'PHARMACIST';
-  const today = format(new Date(), 'EEEE, d MMMM yyyy');
+  const todayDate = format(new Date(), 'yyyy-MM-dd');
+  const todayDisplay = format(new Date(), 'EEEE, d MMMM yyyy');
 
-  const initialPatients = [
-    { id: '1', name: 'Budi Santoso', age: 45, time: '09:00', status: 'Menunggu', medicines: 'Paracetamol 500mg, Ambroxol Syr' },
-    { id: '2', name: 'Siti Aminah', age: 32, time: '09:30', status: 'Selesai', medicines: 'Vit. B Complex, Folavit' },
-    { id: '3', name: 'Andi Wijaya', age: 28, time: '10:15', status: 'Periksa', medicines: 'Ibuprofen 400mg' },
-    { id: '4', name: 'Lia Lestari', age: 35, time: '11:00', status: 'Menunggu', medicines: 'Cetirizine 10mg' },
-    { id: '5', name: 'Hendra Pratama', age: 50, time: '11:30', status: 'Menunggu', medicines: 'Metformin 500mg' },
-  ];
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [records, setRecords] = useState<MedicalRecord[]>([]);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
 
-  const [patients, setPatients] = useState(initialPatients);
+  useEffect(() => {
+    setAppointments(appointmentService.getAppointmentsByDate(todayDate));
+    setPatients(patientService.getPatients());
+    setRecords(recordService.getRecords());
+    setMedicines(pharmacyService.getMedicines());
+  }, [todayDate]);
 
   const handleMarkDone = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setPatients(prev => prev.map(p => p.id === id ? { ...p, status: 'Selesai' } : p));
+    const apt = appointments.find(a => a.id === id);
+    if (apt) {
+      appointmentService.saveAppointment({ ...apt, status: 'Selesai' });
+      setAppointments(appointmentService.getAppointmentsByDate(todayDate));
+    }
   };
 
   const getStats = () => {
     if (role === 'ADMIN') {
       return [
-        { label: 'Total Pasien', value: '1,284', trend: '+12%', icon: Users, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+        { label: 'Total Pasien', value: patients.length.toString(), trend: '+12%', icon: Users, color: 'text-blue-600', bgColor: 'bg-blue-50' },
         { label: 'Pendapatan Klinik', value: 'Rp 45.2jt', trend: '+8%', icon: TrendingUp, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
         { label: 'Admin Aktif', value: '2', trend: 'Stabil', icon: Shield, color: 'text-amber-600', bgColor: 'bg-amber-50' },
         { label: 'Staff Medis', value: '12', trend: '+1', icon: Stethoscope, color: 'text-purple-600', bgColor: 'bg-purple-50' },
       ];
     }
     if (role === 'DOCTOR') {
-      const doneCount = patients.filter(p => p.status === 'Selesai').length;
+      const doneCount = appointments.filter(p => p.status === 'Selesai').length;
       return [
-        { label: 'Pasien Hari Ini', value: patients.length.toString(), trend: `Selesai: ${doneCount}`, icon: Users, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-        { label: 'Jadwal Berikutnya', value: '10:30', trend: 'Andi Wijaya', icon: Calendar, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
-        { label: 'Laporan Pending', value: '3', trend: 'Rekam Medis', icon: ClipboardList, color: 'text-amber-600', bgColor: 'bg-amber-50' },
+        { label: 'Pasien Hari Ini', value: appointments.length.toString(), trend: `Selesai: ${doneCount}`, icon: Users, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+        { label: 'Antrian Berikutnya', value: appointments.find(a => a.status === 'Menunggu')?.time || '--:--', trend: appointments.find(a => a.status === 'Menunggu')?.patient || 'Tidak ada', icon: Calendar, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
+        { label: 'Laporan Pending', value: records.filter(r => r.status !== 'Final').length.toString(), trend: 'Rekam Medis', icon: ClipboardList, color: 'text-amber-600', bgColor: 'bg-amber-50' },
         { label: 'Rata-rata Periksa', value: '15m', trend: 'Hari Ini', icon: Activity, color: 'text-purple-600', bgColor: 'bg-purple-50' },
       ];
     }
     return [
-      { label: 'Inventaris Obat', value: '124', trend: 'Jenis', icon: Pill, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+      { label: 'Inventaris Obat', value: medicines.length.toString(), trend: 'Jenis', icon: Pill, color: 'text-blue-600', bgColor: 'bg-blue-50' },
       { label: 'Resep Masuk', value: '8', trend: 'Hari Ini', icon: ClipboardList, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
-      { label: 'Stok Menipis', value: '12', trend: 'Segera Order', icon: AlertCircle, color: 'text-amber-600', bgColor: 'bg-amber-50' },
+      { label: 'Stok Menipis', value: medicines.filter(m => m.stock < 10).length.toString(), trend: 'Segera Order', icon: AlertCircle, color: 'text-amber-600', bgColor: 'bg-amber-50' },
       { label: 'Obat Terjual', value: '45', trend: 'Item', icon: Activity, color: 'text-purple-600', bgColor: 'bg-purple-50' },
     ];
   };
@@ -187,7 +199,7 @@ export default function Dashboard() {
              <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
                <div>
                  <h3 className="text-lg font-black text-slate-800">Pasien Hari Ini</h3>
-                 <p className="text-xs text-slate-500 font-medium">{today}</p>
+                 <p className="text-xs text-slate-500 font-medium">{todayDisplay}</p>
                </div>
                <button onClick={() => navigate('/app/medical-records')} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Lihat Semua Antrian</button>
              </div>
@@ -197,13 +209,13 @@ export default function Dashboard() {
                     <tr>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pasien</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Obat yang Diterima</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipe</th>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
                       <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {patients.map((p) => (
+                    {appointments.length > 0 ? appointments.map((p) => (
                       <tr 
                         key={p.id} 
                         onClick={() => navigate(`/app/medical-records?id=${p.id}`)}
@@ -214,17 +226,17 @@ export default function Dashboard() {
                         </td>
                         <td className="px-6 py-5">
                            <div className="flex flex-col">
-                             <span className="text-sm font-black text-slate-800">{p.name}</span>
-                             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">{p.age} Tahun</span>
+                             <span className="text-sm font-black text-slate-800">{p.patient}</span>
+                             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">{p.age || '--'} Tahun</span>
                            </div>
                         </td>
                         <td className="px-6 py-5 text-sm text-slate-600 font-medium">
-                          {p.medicines}
+                          {p.type}
                         </td>
                         <td className="px-6 py-5 text-center">
                           <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest inline-block min-w-[80px] ${
                             p.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
-                            p.status === 'Periksa' ? 'bg-blue-100 text-blue-700 animate-pulse' :
+                            p.status === 'Diperiksa' ? 'bg-blue-100 text-blue-700 animate-pulse' :
                             'bg-amber-100 text-amber-700'
                           }`}>
                             {p.status}
@@ -246,7 +258,13 @@ export default function Dashboard() {
                           )}
                         </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-20 text-center text-slate-400 font-medium">
+                          Tidak ada janji temu hari ini.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                </table>
              </div>
