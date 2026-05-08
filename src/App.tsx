@@ -13,6 +13,7 @@ import Examination from './pages/app/Examination';
 import UserManagement from './pages/app/UserManagement';
 import Pharmacy from './pages/app/Pharmacy';
 import Reports from './pages/app/Reports';
+import DoctorDashboard from './pages/app/DoctorDashboard';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
   const { user, profile, loading } = useAuth();
@@ -47,6 +48,11 @@ function AppRouter() {
           </ProtectedRoute>
         }>
           <Route index element={<Dashboard />} />
+          <Route path="doctor-dashboard" element={
+            <ProtectedRoute allowedRoles={['DOCTOR', 'ADMIN']}>
+              <DoctorDashboard />
+            </ProtectedRoute>
+          } />
           <Route path="patients" element={<PatientList />} />
           <Route path="doctors" element={<DoctorsList />} />
           <Route path="schedule" element={<Schedule />} />

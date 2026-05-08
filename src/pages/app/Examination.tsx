@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Activity, 
   User, 
@@ -23,22 +23,36 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { recordService } from '../../services/recordService';
 import { useToast } from '../../components/ui/ToastProvider';
+import { appointmentService, Appointment } from '../../services/appointmentService';
 
 export default function Examination() {
   const [searchParams] = useSearchParams();
   const patientIdFromUrl = searchParams.get('id');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const todayDate = format(new Date(), 'yyyy-MM-dd');
 
-  const [activeQueue, setActiveQueue] = useState([
-    { id: '1', patient: 'Budi Santoso', age: 45, time: '09:00', category: 'Poli Umum', status: 'Urgent', complaint: 'Batuk & Flu' },
-    { id: '3', patient: 'Andi Wijaya', age: 28, time: '10:15', category: 'Poli Umum', status: 'Menunggu', complaint: 'Sakit Kepala' },
-    { id: '4', patient: 'Lia Lestari', age: 35, time: '11:00', category: 'Poli Umum', status: 'Menunggu', complaint: 'Nyeri Sendi' },
-  ]);
+  const [activeQueue, setActiveQueue] = useState<Appointment[]>([]);
 
-  const [selectedPatient, setSelectedPatient] = useState<any>(
+  useEffect(() => {
+    const fetchQueue = () => {
+      const appts = appointmentService.getAppointmentsByDate(todayDate)
+        .filter(a => a.status === 'Menunggu' || a.status === 'Diperiksa');
+      setActiveQueue(appts);
+    };
+    fetchQueue();
+  }, [todayDate]);
+
+  const [selectedPatient, setSelectedPatient] = useState<Appointment | null>(
     patientIdFromUrl ? activeQueue.find(p => p.id === patientIdFromUrl) || null : null
   );
+
+  useEffect(() => {
+    if (patientIdFromUrl && activeQueue.length > 0) {
+      const patient = activeQueue.find(p => p.id === patientIdFromUrl);
+      if (patient) setSelectedPatient(patient);
+    }
+  }, [patientIdFromUrl, activeQueue]);
 
   const [examData, setExamData] = useState({
     subjective: '',
@@ -52,10 +66,15 @@ export default function Examination() {
   const [showLabInput, setShowLabInput] = useState(false);
   const [showPrescriptionInput, setShowPrescriptionInput] = useState(false);
 
-  const handleStartExam = (patient: any) => {
+  const handleStartExam = (patient: Appointment) => {
     setSelectedPatient(patient);
+    
+    // Update appointment status to "Diperiksa"
+    const updatedApt: Appointment = { ...patient, status: 'Diperiksa' };
+    appointmentService.saveAppointment(updatedApt);
+    
     setExamData({
-      subjective: `Keluhan: ${patient.complaint || ''}\n`,
+      subjective: `Keluhan: ${patient.reason || ''}\n`,
       objective: 'Tensi: / mmHg\nNadi: x/mnt\nSuhu: °C\nRR: x/mnt',
       assessment: '',
       plan: '',
@@ -67,6 +86,8 @@ export default function Examination() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSave = () => {
+    if (!selectedPatient) return;
+
     const newRecord = {
       id: Math.random().toString(36).substr(2, 6).toUpperCase(),
       patient: selectedPatient.patient,
@@ -85,6 +106,11 @@ export default function Examination() {
     };
 
     recordService.saveRecord(newRecord);
+    
+    // Update appointment status to "Selesai"
+    const finishedApt: Appointment = { ...selectedPatient, status: 'Selesai' };
+    appointmentService.saveAppointment(finishedApt);
+
     toast("Pemeriksaan berhasil disimpan!", "success");
     setShowSuccessModal(true);
   };
@@ -183,7 +209,7 @@ export default function Examination() {
                           <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-400 mt-2 font-black uppercase tracking-widest">
                              <span className="flex items-center gap-1.5"><Clock size={12} className="text-blue-500" /> {item.time}</span>
                              <span className="flex items-center gap-1.5"><User size={12} className="text-slate-400" /> {item.age} Tahun</span>
-                             <span className="px-2 py-0.5 bg-slate-100 rounded-md text-slate-600 border border-slate-200">{item.category}</span>
+                             <span className="px-2 py-0.5 bg-slate-100 rounded-md text-slate-600 border border-slate-200">{item.type}</span>
                           </div>
                           <p className="mt-3 text-xs text-slate-500 font-medium bg-slate-50 p-2 rounded-lg italic">" {item.complaint} "</p>
                         </div>
@@ -265,7 +291,7 @@ export default function Examination() {
                      <div className="flex items-center gap-4 text-xs font-black uppercase tracking-widest text-slate-400 mt-2">
                         <span className="flex items-center gap-1.5"><User size={14} className="text-blue-500" /> {selectedPatient.age} THN</span>
                         <span className="flex items-center gap-1.5"><Clock size={14} className="text-slate-400" /> MASUK {selectedPatient.time}</span>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-100">{selectedPatient.category}</span>
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-100">{selectedPatient.type}</span>
                      </div>
                    </div>
                 </div>

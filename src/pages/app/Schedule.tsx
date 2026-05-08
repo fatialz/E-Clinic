@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar as CalendarIcon, 
   Clock, 
@@ -18,14 +18,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isTod
 import { cn } from '../../lib/utils';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { useToast } from '../../components/ui/ToastProvider';
-
-interface Appointment {
-  id: string;
-  patient: string;
-  time: string;
-  type: string;
-  doctor: string;
-}
+import { appointmentService, Appointment } from '../../services/appointmentService';
 
 export default function Schedule() {
   const { toast } = useToast();
@@ -34,16 +27,16 @@ export default function Schedule() {
   const [isEditingPraktek, setIsEditingPraktek] = useState(false);
   
   // Appointment Management State
-  const [appointmentsByDate, setAppointmentsByDate] = useState<Record<string, Appointment[]>>({
-    [format(new Date(), 'yyyy-MM-dd')]: [
-      { id: '1', patient: 'Budi Santoso', time: '09:00', type: 'General Checkup', doctor: 'dr. Sarah' },
-      { id: '2', patient: 'Ani Wijaya', time: '10:30', type: 'Konsultasi Spesialis', doctor: 'dr. Sarah' },
-      { id: '3', patient: 'Siti Aminah', time: '14:00', type: 'Follow up', doctor: 'dr. Sarah' },
-    ]
-  });
+  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
+
+  useEffect(() => {
+    setAllAppointments(appointmentService.getAppointments());
+  }, []);
 
   const dateKey = format(selectedDate, 'yyyy-MM-dd');
-  const activeAppointments = appointmentsByDate[dateKey] || [];
+  const activeAppointments = allAppointments
+    .filter(a => a.date === dateKey)
+    .sort((a, b) => a.time.localeCompare(b.time));
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
@@ -51,7 +44,9 @@ export default function Schedule() {
     patient: '',
     time: '09:00',
     type: 'General Checkup',
-    doctor: 'dr. Sarah'
+    doctor: 'dr. Sarah',
+    status: 'Menunggu' as const,
+    reason: ''
   });
 
   const [practiceSchedule, setPracticeSchedule] = useState([
@@ -92,7 +87,7 @@ export default function Schedule() {
 
   const handleSaveSchedule = () => {
     setIsEditingPraktek(false);
-    alert('Jadwal Praktek Real-time telah diperbarui!');
+    toast('Jadwal Praktek Real-time telah diperbarui!', "success");
   };
 
   const openAddModal = () => {
@@ -101,7 +96,9 @@ export default function Schedule() {
       patient: '',
       time: '09:00',
       type: 'General Checkup',
-      doctor: 'dr. Sarah'
+      doctor: 'dr. Sarah',
+      status: 'Menunggu',
+      reason: ''
     });
     setIsModalOpen(true);
   };
@@ -112,7 +109,9 @@ export default function Schedule() {
       patient: apt.patient,
       time: apt.time,
       type: apt.type,
-      doctor: apt.doctor
+      doctor: apt.doctor,
+      status: apt.status,
+      reason: apt.reason || ''
     });
     setIsModalOpen(true);
   };
@@ -121,37 +120,24 @@ export default function Schedule() {
     e.preventDefault();
     if (!formData.patient) return;
 
-    setAppointmentsByDate(prev => {
-      const currentDayApts = prev[dateKey] || [];
-      let updatedDayApts;
+    const newApt: Appointment = {
+      id: editingAppointment?.id || Math.random().toString(36).substr(2, 9),
+      ...formData,
+      date: dateKey
+    };
 
-      if (editingAppointment) {
-        updatedDayApts = currentDayApts.map(a => 
-          a.id === editingAppointment.id ? { ...a, ...formData } : a
-        );
-      } else {
-        const newApt: Appointment = {
-          id: Math.random().toString(36).substr(2, 9),
-          ...formData
-        };
-        updatedDayApts = [...currentDayApts, newApt].sort((a, b) => a.time.localeCompare(b.time));
-      }
-
-      return {
-        ...prev,
-        [dateKey]: updatedDayApts
-      };
-    });
+    appointmentService.saveAppointment(newApt);
+    setAllAppointments(appointmentService.getAppointments());
+    
     setIsModalOpen(false);
     toast(editingAppointment ? "Jadwal berhasil diperbarui!" : "Jadwal baru berhasil ditambahkan!", "success");
     setEditingAppointment(null);
   };
 
   const handleDeleteAppointment = (id: string) => {
-    setAppointmentsByDate(prev => ({
-      ...prev,
-      [dateKey]: (prev[dateKey] || []).filter(a => a.id !== id)
-    }));
+    appointmentService.deleteAppointment(id);
+    setAllAppointments(appointmentService.getAppointments());
+    toast("Jadwal janji temu berhasil dihapus", "info");
   };
 
   const AppointmentModal = () => (

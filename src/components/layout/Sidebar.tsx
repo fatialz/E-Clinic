@@ -27,6 +27,12 @@ export default function Sidebar() {
       roles: ['ADMIN', 'DOCTOR', 'PHARMACIST'],
     },
     {
+      label: 'Doctor Dashboard',
+      path: '/app/doctor-dashboard',
+      icon: Stethoscope,
+      roles: ['ADMIN', 'DOCTOR'],
+    },
+    {
       label: 'Data Pasien',
       path: '/app/patients',
       icon: Users,

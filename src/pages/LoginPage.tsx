@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { motion } from 'motion/react';
 import { Stethoscope, Mail, Lock, Loader2, AlertCircle, Shield, Pill, ArrowRight, Activity, CheckCircle2 } from 'lucide-react';
 import { supabase, getSupabase } from '../lib/supabase';
 
@@ -74,103 +74,73 @@ export default function LoginPage() {
     setSupportSuccess(true);
   };
 
-  const cardRef = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseX = useSpring(x, { stiffness: 100, damping: 30 });
-  const mouseY = useSpring(y, { stiffness: 100, damping: 30 });
-
-  const rotateX = useTransform(mouseY, [0, 600], [10, -10]);
-  const rotateY = useTransform(mouseX, [0, 800], [-10, 10]);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    x.set(e.clientX - rect.left);
-    y.set(e.clientY - rect.top);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(400);
-    y.set(300);
-  };
-
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden bg-white selection:bg-blue-100 selection:text-blue-900 group/login">
-      {/* High-End Professional Background */}
+    <div className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden bg-slate-50 selection:bg-blue-100 selection:text-blue-900">
+      {/* Background Orbs */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* Interactive Focus Light - Refined for higher precision */}
-        <div className="absolute inset-0 z-10 opacity-20 mix-blend-soft-light pointer-events-none bg-[radial-gradient(circle_at_var(--mouse-x,50%)_var(--mouse-y,50%),rgba(37,99,235,0.4)_0%,transparent_40%)] transition-opacity duration-300 group-hover/login:opacity-100" />
-        
-        {/* Static noise for texture depth */}
-        <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-        
-        {/* Deep Field Aurora Orbs */}
         <motion.div 
           animate={{ 
             scale: [1, 1.2, 1],
-            x: [0, 80, 0],
-            rotate: [0, 45, 0]
+            x: [0, 50, 0],
+            y: [0, 30, 0] 
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-[20%] -left-[10%] w-[100%] h-[100%] rounded-full bg-blue-50/50 blur-[160px]"
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full bg-blue-100/40 blur-[120px]"
         />
         <motion.div 
           animate={{ 
-            scale: [1, 1.3, 1],
-            x: [0, -80, 0],
-            rotate: [0, -45, 0]
+            scale: [1, 1.1, 1],
+            x: [0, -40, 0],
+            y: [0, -20, 0] 
           }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear", delay: 5 }}
-          className="absolute -bottom-[20%] -right-[10%] w-[90%] h-[90%] rounded-full bg-indigo-50/40 blur-[160px]"
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute bottom-[0%] -right-[10%] w-[50%] h-[50%] rounded-full bg-indigo-50/40 blur-[120px]"
         />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+      </div>
 
-        {/* Engineering Grid - More subtle */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000003_1px,transparent_1px),linear-gradient(to_bottom,#00000003_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_100%,transparent_0%)]"></div>
+      {/* Floating Elements */}
+      <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
+        {[Stethoscope, Pill, Shield, Activity].map((Icon, index) => (
+          <motion.div
+            key={index}
+            initial={{ 
+              x: Math.random() * 100 + '%', 
+              y: Math.random() * 100 + '%',
+              rotate: Math.random() * 360
+            }}
+            animate={{ 
+              y: [null, '-=20px', '+=20px'],
+              rotate: [null, '+=10deg', '-=10deg']
+            }}
+            transition={{ 
+              duration: 5 + Math.random() * 5, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+            className="absolute text-blue-300"
+          >
+            <Icon size={40 + Math.random() * 40} strokeWidth={1} />
+          </motion.div>
+        ))}
       </div>
 
       <motion.div
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        style={{
-          rotateX,
-          rotateY,
-          perspective: 1000
-        }}
-        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 1.2, type: "spring", bounce: 0 }}
-        className="max-w-md w-full bg-white/80 backdrop-blur-3xl rounded-[3rem] border border-white p-10 relative z-30 shadow-[0_32px_80px_-16px_rgba(0,0,0,0.1)] cursor-default"
+        transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
+        className="max-w-md w-full bg-white/80 backdrop-blur-2xl rounded-3xl border border-white p-10 relative z-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
       >
         <div className="relative text-center mb-10">
           <motion.div 
-            whileHover={{ scale: 1.1, rotate: 12 }}
-            className="w-14 h-14 medical-gradient rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-[0_12px_24px_-8px_rgba(37,99,235,0.4)]"
+            whileHover={{ rotate: 12, scale: 1.1 }}
+            className="w-16 h-16 medical-gradient rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-blue-500/20"
           >
-            <Stethoscope size={28} />
+            <Stethoscope size={32} />
           </motion.div>
-          <div className="overflow-hidden">
-            <motion.h2 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-3"
-            >
-              SELAMAT DATANG
-            </motion.h2>
-          </div>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] opacity-60"
-          >
-            Management Core Environment v1.0
-          </motion.p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">SELAMAT DATANG</h2>
+          <p className="text-slate-500 mt-3 text-sm font-medium">Masuk ke pusat manajemen E-Clinic Anda</p>
         </div>
-
 
         {error && (
           <motion.div
@@ -185,74 +155,48 @@ export default function LoginPage() {
 
 
         <form onSubmit={handleLogin} className="space-y-6">
-          <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-2"
-          >
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-black text-slate-700 ml-1 uppercase tracking-widest opacity-60">Email Klinik</label>
-              <div className="h-px flex-1 bg-slate-100 mx-4 opacity-50"></div>
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-black text-slate-700 ml-1 uppercase tracking-widest opacity-60">Email Klinik</label>
             <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-all duration-500 group-focus-within:scale-110" size={20} />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50/30 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 font-medium"
+                className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-blue-200 focus:bg-white transition-all text-slate-900 font-medium"
                 placeholder="admin@clinic.com"
               />
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-2"
-          >
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-black text-slate-700 ml-1 uppercase tracking-widest opacity-60">Password</label>
-              <div className="h-px flex-1 bg-slate-100 mx-4 opacity-50"></div>
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-black text-slate-700 ml-1 uppercase tracking-widest opacity-60">Password</label>
             <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-all duration-500 group-focus-within:scale-110" size={20} />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50/30 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 font-medium"
+                className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-blue-200 focus:bg-white transition-all text-slate-900 font-medium"
                 placeholder="••••••••"
               />
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center justify-between text-[10px] px-1 font-black uppercase tracking-widest"
-          >
+          <div className="flex items-center justify-between text-[10px] px-1 font-black uppercase tracking-widest">
             <label className="flex items-center gap-2 text-slate-500 cursor-pointer">
               <input type="checkbox" className="rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
               <span>Ingat Saya</span>
             </label>
             <a href="#" className="text-blue-600 hover:underline">Lupa Password?</a>
-          </motion.div>
+          </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+          <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-[0_20px_40px_-12px_rgba(37,99,235,0.3)] hover:bg-blue-700 hover:shadow-[0_24px_48px_-12px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
             {loading ? (
               <>
@@ -265,7 +209,7 @@ export default function LoginPage() {
                 <ArrowRight size={18} />
               </>
             )}
-          </motion.button>
+          </button>
         </form>
 
         <p className="text-center mt-10 text-slate-500 text-[10px] font-black uppercase tracking-widest opacity-60">
